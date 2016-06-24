@@ -1,4 +1,4 @@
-;;; evil-comment-block.el --- Motions and text objects for comment blocks in Evil.
+;;; Evi-comment-block.el --- Motions and text objects for comment blocks in Evil.
 
 ;; Copyright (c) 2016 Launay Gaby
 
@@ -51,23 +51,13 @@
 
 (require 'evil)
 
-(defgroup evil-comment-block nil
-  "Motions and text objects for comment blocks in Evil."
-  :group 'evil)
-
-(defcustom evil-comment-block-comment-regexp
-  (lambda ()
-    (format "^\\s-*%s" comment-start))
-  "Function returning the regexp matching the comment lines"
-  :type '(sexp))
-
 (defun evil-comment-block--get-block-region()
   (interactive)
   (save-excursion
     (let ((pos-init (progn (end-of-line) (point)))
 	  (beg nil)
 	  (end nil)
-	  (comment-regexp evil-comment-block-comment-regexp))
+	  (comment-regexp (format "^\\s-*%s" comment-start)))
       (end-of-line)
       ;; Check if i should comment or uncomment
       (if (re-search-backward comment-regexp (line-beginning-position) t)
@@ -76,16 +66,16 @@
 	    ;; Get first commented line
 	    (goto-char pos-init)
 	    (while (re-search-backward comment-regexp (line-beginning-position) t)
-	      (previous-line)
+	      (forward-line -1)
 	      (end-of-line))
-	    (next-line)
+	    (forward-line)
 	    (setq beg (line-beginning-position))
 	    ;; get last commented line
 	    (goto-char pos-init)
 	    (while (re-search-backward comment-regexp (line-beginning-position) t)
-	      (next-line)
+	      (forward-line)
 	      (end-of-line))
-	    (previous-line)
+	    (forward-line -1)
 	    (setq end (+ (line-end-position) 1))
 	    ;; store result
 	    (list beg end t))
@@ -93,16 +83,16 @@
 	;; Get first commented line
 	(goto-char pos-init)
 	(while (not (re-search-backward comment-regexp (line-beginning-position) t))
-	  (previous-line)
+	  (forward-line -1)
 	  (end-of-line))
-	(next-line)
+	(forward-line)
 	(setq beg (line-beginning-position))
 	;; get last commented line
 	(goto-char pos-init)
 	(while (not (re-search-backward comment-regexp (line-beginning-position) t))
-	  (next-line)
+	  (forward-line)
 	  (end-of-line))
-	(previous-line)
+	(forward-line -1)
 	(setq end (+ (line-end-position) 1))
 	;; Store result
 	(list beg end nil)))))
@@ -110,7 +100,7 @@
 ;;;###autoload (autoload 'evil-comment-block-inner-comment-block "evil-comment-block")
 (evil-define-text-object evil-comment-block-inner-comment-block (count &optional beg end type)
   "Select inner delimited commented block."
-    (let ((region (get-comment-uncomment-commented-block-region))
+    (let ((region (evil-comment-block--get-block-region))
          (beg nil)
 	 (end nil))
       (setq beg (pop region))
@@ -120,14 +110,14 @@
 ;;;###autoload (autoload 'evil-comment-block-outer-comment-block "evil-comment-block")
 (evil-define-text-object evil-comment-block-outer-comment-block (count &optional beg end type)
   "Select outer delimited commented block."
-    (let ((region (get-comment-uncomment-commented-block-region))
+    (let ((region (evil-comment-block--get-block-region))
          (beg nil)
 	 (end nil))
       (setq beg (pop region))
       (setq end (pop region))
       (save-excursion
 	(goto-char beg)
-	(previous-line)
+	(forward-line -1)
 	(setq beg (line-beginning-position))
 	(goto-char end)
 	(setq end (+ (line-end-position) 1)))
@@ -149,14 +139,11 @@
 	  (uncomment-region beg end)
 	(save-excursion
 	  (goto-char beg)
-	  (previous-line)
+	  (forward-line -1)
 	  (setq beg (line-beginning-position))
 	  (goto-char end)
 	  (setq end (+ (line-end-position) 1)))
-	(comment-region beg end)))))
-(define-key evil-inner-text-objects-map "cb" 'evil-inner-comment-block)
-(define-key evil-outer-text-objects-map "cb" 'evil-outer-comment-block)
-(evil-leader/set-key "cb" 'comment-or-uncomment-block)
+	(comment-region beg end))))
 
 (provide 'evil-comment-block)
 ;;; evil-comment-block.el ends here
