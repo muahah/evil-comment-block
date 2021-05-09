@@ -1,4 +1,4 @@
-;;; Evi-comment-block.el --- Motions and text objects for comment blocks in Evil.
+;;; Evil-comment-block.el --- Motions and text objects for comment blocks in Evil.
 
 ;; Copyright (c) 2016 Launay Gaby
 
